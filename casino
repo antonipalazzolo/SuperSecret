@@ -1,0 +1,60 @@
+
+var ENV='dev';
+
+var http = require('http');
+var mongoClient = require('mongodb').MongoClient;
+var url='mongodb://santacoke:dsqlmdksqd78@ds041377.mlab.com:41377/heroku_cn5p8898';
+var dbname = `heroku_cn5p8898`;
+var collectionName = `winnners_${ENV}`;
+
+const PORT = process.env.PORT || 5000;
+
+http.createServer(function(req, res){
+  res.writeHead(200, {'Content-Type': 'application/json'});
+  
+  var img = "NULL";
+  
+  mongoClient.connect(url, function(err, db){
+    if (err) throw err;
+    var dbo = db.db(dbname);
+    var nowMs = Date.now(); // Epoch Time
+    var now = new Date(nowMs);
+    beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(),0,0,0,0);
+    
+    var query = { date: {$gte: beginningOfDay.getTime()} };
+    
+    dbo.collection(collectionName).findOne(query, function(err2, result2) { // THAT IS TODAY
+      if (err2) throw err2;
+      
+      if(result2===null && now.getHours() > 8) { // after 9 AM Paris time
+        img = "https://media.giphy.com/media/xTiTnoUnHxVaaVNWhO/giphy.gif"; // winner
+        
+        dbo.collection(collectionName).insertOne({date: now.getTime()},function(err3, result3){
+          if (err3) throw err3;
+          console.log(`Winner inserted at ${now} - ${result3}`);
+        });
+        
+      } else {
+        img = "https://media.giphy.com/media/xTiTnoUnHxVaaVNWhO/giphy.gif"; // looser
+        console.log(`Looser not inserted at ${now} - found ${result2}`);
+      }
+      db.close();
+    })
+  });
+  
+  res.end(JSON.stringify(
+    {
+      "messages": [
+        {
+          "attachment": {
+            "type": "image",
+            "payload": {
+              "url": img
+            }
+          }
+        }
+      ]
+    }
+    ));
+    
+  }).listen(PORT);
