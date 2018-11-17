@@ -3,7 +3,7 @@ var ENV='dev';
 
 var http = require('http');
 var mongoClient = require('mongodb').MongoClient;
-var url='mongodb://santacoke:dsqlmdksqd78@ds041377.mlab.com:41377/heroku_cn5p8898';
+var url
 var dbname = `heroku_cn5p8898`;
 var collectionName = `winnners_${ENV}`;
 
